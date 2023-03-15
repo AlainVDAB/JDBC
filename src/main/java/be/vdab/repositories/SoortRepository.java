@@ -3,6 +3,7 @@ package be.vdab.repositories;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 
 public class SoortRepository extends AbstractRepository {
     public long create(String naam) throws SQLException {
@@ -41,4 +42,23 @@ public class SoortRepository extends AbstractRepository {
             }
         }
     }
+
+    public void create(List<String> namen) throws SQLException {
+        var sql = """
+                insert into soorten(naam)
+                values (?)
+                """;
+        try (var connection = super.getConnection();
+             var statement = connection.prepareStatement(sql)) {
+            connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            connection.setAutoCommit(false);
+            for (String naam : namen) {
+                statement.setString(1, naam);
+                statement.addBatch();
+            }
+            statement.executeBatch();
+            connection.commit();
+        }
+    }
+
 }
